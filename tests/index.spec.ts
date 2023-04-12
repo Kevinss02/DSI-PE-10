@@ -1,20 +1,20 @@
-import "mocha";
-import { expect } from "chai";
-import { add } from "../src/index";
+import 'mocha';
+import {expect} from 'chai';
+import {EventEmitter} from 'events';
+import {MessageEventEmitterClient} from '../src/eventEmitterClient';
 
-describe("add", () => {
-  it("should return the sum of two numbers", () => {
-    const result = add(2, 3);
-    expect(result).to.equal(5);
-  });
+describe('MessageEventEmitterClient', () => {
+  it('Should emit a message event once it gets a complete message', (done) => {
+    const socket = new EventEmitter();
+    const client = new MessageEventEmitterClient(socket);
 
-  it("should handle negative numbers", () => {
-    const result = add(-2, 3);
-    expect(result).to.equal(1);
-  });
+    client.on('message', (message) => {
+      expect(message).to.be.eql({'type': 'change', 'prev': 13, 'curr': 26});
+      done();
+    });
 
-  it("should handle zero values", () => {
-    const result = add(0, 0);
-    expect(result).to.equal(0);
+    socket.emit('data', '{"type": "change", "prev": 13');
+    socket.emit('data', ', "curr": 26}');
+    socket.emit('data', '\n');
   });
 });
