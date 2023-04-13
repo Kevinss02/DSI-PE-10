@@ -9,12 +9,11 @@ describe('MessageEventEmitterClient', () => {
     const client = new MessageEventEmitterClient(socket);
 
     client.on('message', (message) => {
-      expect(message).to.be.eql({'type': 'change', 'prev': 13, 'curr': 26});
+      expect(message).to.be.eql({'type': 'commandOutput', 'output': "output"});
       done();
     });
 
-    socket.emit('data', '{"type": "change", "prev": 13');
-    socket.emit('data', ', "curr": 26}');
+    socket.emit('data', '{"type": "commandOutput", "output": "output"}');
     socket.emit('data', '\n');
   });
 });

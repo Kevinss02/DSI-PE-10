@@ -1,25 +1,38 @@
-import * as net from 'net';
-import {watchFile} from 'fs';
+import net from "net";
+import { spawn } from "child_process";
+import {MessageEventEmitterClient} from './eventEmitterClient.js';
 
-if (process.argv.length !== 3) {
-  console.log('Please, provide a filename.');
-} else {
-  const fileName = process.argv[2];
-  
-  net.createServer((connection) => {
-    console.log('A client has connected.');
+net.createServer((connection) => {
+    console.log("A client has connected.");
 
-    connection.write(`Connection established: watching file ${fileName}.\n`);
+    connection.write(JSON.stringify({ type: "ready" }) + "\n");
 
-    watchFile(fileName, (curr, prev) => {
-      connection.write(`Size of file ${fileName} was ${prev.size}.\n`);
-      connection.write(`Size of file ${fileName} now is ${curr.size}.\n`);
+    let commandString = '';
+    connection.on("data", (dataJSON) => {
+      commandString = dataJSON.toString();
+      console.log(commandString);
     });
 
-    connection.on('close', () => {
-      console.log('A client has disconnected.');
+    const command = spawn("cat", ["-n", "a.txt"]); // CommandString here
+
+    let output = "";
+    command.stdout.on("data", (piece) => {
+      output = piece.toString();
     });
-  }).listen(60300, () => {
-    console.log('Waiting for clients to connect.');
+
+    command.on("close", () => {
+      connection.write(
+        JSON.stringify({
+          type: "commandOutput",
+          output: output,
+        }) + "\n"
+      );
+    });
+
+    connection.on("close", () => {
+      console.log("A client has disconnected.");
+    });
+  })
+  .listen(60300, () => {
+    console.log("Waiting for clients to connect.");
   });
-}
